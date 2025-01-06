@@ -64,21 +64,23 @@ fi
 USERPASS=$(pwgen -B 8 1)
 DBPASS=$(pwgen -B 8 1)
 
+INSTALL_DIR="/opt/libki"
+
 # Add libki user
 useradd -m -s /bin/bash -p $(openssl passwd -1 $USERPASS) libki
 
 # Copies the folder to /home/libki
-mkdir /home/libki/libki-server
-cp * /home/libki/libki-server -R
-chown libki:libki /home/libki/libki-server -R
+mkdir "$INSTALL_DIR"
+cp -R * "$INSTALL_DIR"
+chown -R libki:libki "$INSTALL_DIR"
 
 # Install cpan perl modules globally
-cpanm -n Module::Install
-cpanm -n --installdeps .
+cpanm -M https://cpan.org/ -n Module::Install
+cpanm -M https://cpan.org/ -n --installdeps .
 
-echo 'export PERL5LIB=$PERL5LIB:/home/libki/libki-server/lib' >> ~/.bashrc
-echo 'export PERL5LIB=$PERL5LIB:/home/libki/libki-server/lib' >> /home/libki/.bashrc
-export PERL5LIB=$PERL5LIB:/home/libki/libki-server/lib
+echo 'export PERL5LIB=$PERL5LIB:'"$INSTALL_DIR"'/lib' >> ~/.bashrc
+echo 'export PERL5LIB=$PERL5LIB:'"$INSTALL_DIR"'/lib' >> /home/libki/.bashrc
+export PERL5LIB=$PERL5LIB:"$INSTALL_DIR"/lib
 
 # Create log files, change ownership to libki
 mkdir /var/log/libki
@@ -88,11 +90,12 @@ touch /var/log/libki/libki_server.log
 chown libki:libki /var/log/libki/libki.log
 chown libki:libki /var/log/libki/libki_server.log
 
-cp /home/libki/libki-server/libki_local.conf.example /home/libki/libki-server/libki_local.conf
-cp /home/libki/libki-server/log4perl.conf.example /home/libki/libki-server/log4perl.conf
+# Copy and set ownership of configuration files
+cp "$INSTALL_DIR"/libki_local.conf.example "$INSTALL_DIR"/libki_local.conf
+cp "$INSTALL_DIR"/log4perl.conf.example "$INSTALL_DIR"/log4perl.conf
 
-chown libki:libki /home/libki/libki-server/libki_local.conf
-chown libki:libki /home/libki/libki-server/log4perl.conf
+chown libki:libki "$INSTALL_DIR"/libki_local.conf
+chown libki:libki "$INSTALL_DIR"/log4perl.conf
 
 # Create libki database and database user
 mysql <<MYSQL_SCRIPT
